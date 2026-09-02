@@ -72,8 +72,8 @@ def listNamespacesInfo(access_key, secret_key, namespaceId, gbId):
 
 if __name__ == '__main__':
     #  AKSK
-    access_key = '_cuhfevwcyWnDoIo6fRPXiI_Bs_vpCqv7EiGT1AH'
-    secret_key = 'LwXvSgvUbcP0A52iQ1BqaKTCQbds5IKIAqtfosVZ'
+    access_key = '{{access_key}}'
+    secret_key = '{{secret_key}}'
 
     with open('devices.txt', 'r') as file:
         for line in file:
