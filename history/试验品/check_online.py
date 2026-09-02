@@ -30,8 +30,8 @@ def send_webhook_message(webhook_url, message):
 
 def main():
     # 七牛账号 AK、SK
-    access_key = '_cuhfevwcyWnDoIo6fRPXiI_Bs_vpCqv7EiGT1AH'
-    secret_key = 'LwXvSgvUbcP0A52iQ1BqaKTCQbds5IKIAqtfosVZ'
+    access_key = '{{access_key}}'
+    secret_key = '{{secret_key}}'
 
     # 空间ID
     namespaceId = "NAMESPACEID"
