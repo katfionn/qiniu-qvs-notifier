@@ -11,8 +11,8 @@ on:
 env:
   # 统一使用 GitHub 的容器注册表 (GHCR)
   REGISTRY: ghcr.io
-  # 镜像名称默认为 拥有者/仓库名，转为小写
-  IMAGE_NAME: ${{ github.repository_owner }}/qiniu-qvs-notifier
+  # 镜像名称使用小写的仓库全名
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build-and-push-image:
@@ -49,6 +49,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           # 自动打 tag：如果推送到 main 分支，打 latest；如果是 tag，使用版本号
+          flavor: |
+            latest=auto
           tags: |
             type=schedule
             type=ref,event=branch
