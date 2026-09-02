@@ -4,8 +4,7 @@ __pycache__/
 *.log
 config/
 devices.txt
-检查七牛设备是否在线/
-正式代码-MVP/
+history/
 .git/
 .github/
 .vscode/
