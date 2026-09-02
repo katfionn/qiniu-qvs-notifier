@@ -99,9 +99,12 @@ def main() -> None:
                 configure(); continue
             if action == t("menu.language"):
                 change_language(); continue
+
+            # 需要选择服务模式的操作
             mode = choose_mode() if action == t("menu.install") else select_installed_mode(manager)
-            if not mode:
+            if mode is None:  # 用户选择"返回"
                 continue
+
             if action == t("menu.install"):
                 if manager.status(mode).installed:
                     console.print(t("service.already_installed")); show_status(manager, mode)
