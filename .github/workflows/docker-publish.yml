@@ -12,7 +12,7 @@ env:
   # 统一使用 GitHub 的容器注册表 (GHCR)
   REGISTRY: ghcr.io
   # 镜像名称默认为 拥有者/仓库名，转为小写
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: ${{ github.repository_owner }}/qiniu-qvs-notifier
 
 jobs:
   build-and-push-image:
@@ -20,6 +20,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
 
     steps:
       - name: Checkout repository
