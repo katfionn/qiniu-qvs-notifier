@@ -17,6 +17,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 拷贝项目源代码
+COPY qvs_notifier/ qvs_notifier/
 COPY web/ web/
 COPY run_web.py .
 

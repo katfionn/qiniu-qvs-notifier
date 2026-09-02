@@ -6,10 +6,10 @@ import os
 CONFIG_PATH = "config/settings.yaml"
 
 class WebhookConfig(BaseModel):
-    url: str = Field(default="{{webhook_url}}", description="Webhook 地址")
+    url: str = Field(default="", description="Webhook 地址")
     auth_type: str = Field(default="none", description="鉴权方式: none, sign, keyword")
-    secret: str = Field(default="{{webhook_secret}}", description="加签密钥 (用于钉钉/企微等)")
-    keyword: str = Field(default="{{webhook_keyword}}", description="自定义关键词 (用于钉钉等关键词校验)")
+    secret: str = Field(default="", description="加签密钥 (用于钉钉/企微等)")
+    keyword: str = Field(default="", description="自定义关键词 (用于钉钉等关键词校验)")
     # 使用字符串保存 JSON，方便前端渲染为文本域
     custom_body: str = Field(
         default='{"msgtype": "text", "text": {"content": "{message}"}}',
@@ -18,8 +18,8 @@ class WebhookConfig(BaseModel):
     template: str = Field(default="[{device} 设备{state}]", description="告警消息文本模板")
 
 class QiniuConfig(BaseModel):
-    access_key: str = Field(default="{{qiniu_access_key}}", description="七牛云 AK")
-    secret_key: str = Field(default="{{qiniu_secret_key}}", description="七牛云 SK")
+    access_key: str = Field(default="", description="七牛云 AK")
+    secret_key: str = Field(default="", description="七牛云 SK")
 
 class ScheduleConfig(BaseModel):
     mode: str = Field(default="loop", description="调度模式: once (单次), loop (轮询)")
