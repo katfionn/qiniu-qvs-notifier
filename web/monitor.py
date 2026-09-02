@@ -167,10 +167,10 @@ async def run_inspection_cycle():
         tasks = [process_device(session, config, device) for device in devices]
         await asyncio.gather(*tasks)
 
-async def start_daemon():
+async def start_daemon(stop_event=None):
     """常驻后台调度器"""
     logger.info("监控调度守护线程已启动...")
-    while True:
+    while not (stop_event and stop_event.is_set()):
         config = load_config()
 
         # 不论是 once 还是 loop，都先执行一次
@@ -183,7 +183,10 @@ async def start_daemon():
         # 轮询模式，读取间隔并等待
         interval = max(10, config.schedule.interval_seconds) # 至少10秒保护
         logger.info(f"进入休眠，等待 {interval} 秒后进行下一轮巡检...")
-        await asyncio.sleep(interval)
+        if stop_event:
+            await asyncio.to_thread(stop_event.wait, interval)
+        else:
+            await asyncio.sleep(interval)
 
 if __name__ == "__main__":
     asyncio.run(start_daemon())

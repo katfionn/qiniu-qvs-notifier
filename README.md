@@ -1,68 +1,60 @@
-# Qiniu QVS Device Monitor & Alert System (V2)
+# 七牛 QVS 通知器
 
-一个高性能、可配置的七牛云设备监控与告警系统，内置 Web 控制台。
+[简体中文](README.md) | [English](docs/README.en.md) | [Español](docs/README.es.md) | [Français](docs/README.fr.md)
 
-## 🌟 核心特性 (Features)
-- 🚀 **异步高并发**: 基于 `aiohttp`，秒级完成数千台设备的巡检。
-- 🛡️ **智能防抖告警**: 仅在设备状态**发生翻转**时发送通知，彻底告别钉钉消息风暴。
-- 🤖 **通用 Webhook 引擎**:
-  - 支持 **钉钉/企业微信 HMAC-SHA256 加签** 以及 关键字校验。
-  - 支持在 UI 上编写自定义 **JSON Body 模板**，无缝对接 Server酱、飞书等任何平台。
-- ⏱️ **内置任务调度 (Daemon)**: 无需自行配置 crontab，Web 服务启动后自动拉起后台守护协程，支持动态修改轮询间隔和模式 (单次/无限)。
-- 🖥️ **一站式 Web 面板**: 零编译前端，可视化管理 七牛 API 凭证、设备库和通知策略。
-- 🐳 **容器化支持**: 提供现成的 Docker 镜像和流水线，实现极简部署。
+通过钉钉或其他 Webhook，在七牛 QVS 设备状态发生变化时发送告警。Web 控制台与后台监控共用现有的巡检核心、配置和 SQLite 设备存储。
 
----
+## 安装
 
-## 🚀 安装与部署
+### Docker：仅 Web 服务
 
-我们推荐使用 Docker 方式部署，环境完全隔离且极简。如果你希望在本地开发或不想用 Docker，也可以选择源码部署。
+Docker 只提供 Web 服务，不包含交互式 TUI 或服务模式选择。
 
-### 方式一：Docker 部署 (推荐)
-
-本项目借助 GitHub Actions 自动构建最新镜像并发布到 GHCR (GitHub Container Registry)。
-
-**1. 准备目录与 docker-compose**
-在你的服务器上新建一个目录，并创建 `docker-compose.yml` 文件：
-```yaml
-version: '3.8'
-services:
-  qiniu-monitor:
-    image: ghcr.io/katfionn/qiniu-qvs-device-alert-to-dingtalk-bot:latest
-    container_name: qiniu-monitor
-    restart: always
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./config:/app/config  # 数据持久化目录
-    environment:
-      - TZ=Asia/Shanghai
-```
-
-**2. 启动服务**
 ```bash
-docker-compose up -d
+docker compose up -d --build
 ```
-服务启动后，访问 `http://<你的IP>:8000` 进入后台。配置和设备数据均会安全地保存在本地的 `./config` 目录中。
 
----
+访问 `http://localhost:8000`。挂载的 `./config` 目录会持久化配置和设备数据；`restart: always` 会在故障及主机重启后自动恢复服务。
 
-### 方式二：源码部署
+### 源码：TUI 安装器与管理器
 
-推荐使用 Python 3.9+ 环境。
+请使用 Python 3.9 或更高版本：
 
-**1. 拉取代码与依赖**
 ```bash
-git clone https://github.com/katfionn/Qiniu-QVS-device-alert-to-Dingtalk-bot-.git
-cd Qiniu-QVS-device-alert-to-Dingtalk-bot-
-pip install -r requirements.txt
+python install.py
 ```
 
-**2. 启动一站式服务**
-我们已将监控调度引擎无缝嵌入在 Web 服务内部，运行以下命令，系统就会开始运转：
+入口会检查依赖（并可安装 `requirements.txt`），然后打开 TUI。请选择一种服务模式：
+
+- **Web 服务**：运行 Web 控制台及内置监控。安装后访问 `http://127.0.0.1:8000`。
+- **TUI/监控服务**：仅在后台运行非交互式监控。TUI 始终是前台管理工具，不会被错误地注册为无交互后台服务。
+
+TUI 支持安装、状态查看、启动、停止、重启、日志命令、凭证配置、语言选择和卸载。已安装服务会进入管理流程，不会重复创建。
+
+## 原生服务
+
+Linux 上，安装器会在 `/etc/systemd/system` 创建动态 systemd unit，使用真实安装路径生成 `WorkingDirectory` 和 `ExecStart`，并设置 `Restart=on-failure` 与 `systemctl enable`。安装、删除和控制需要 `sudo`。
+
+Windows 上，项目使用注册到 Windows Service Control Manager 的 pywin32 `ServiceFramework`，而不是 `systemctl` 或脱离管理的进程。安装器会检测管理员权限不足并提示以管理员身份重新运行；两个服务模式均使用 Windows 服务恢复策略自动重启。
+
+服务抽象层已为 macOS 预留，但尚未实现。
+
+## 卸载
+
+在 TUI 中选择“卸载七牛 QVS 通知器”。系统会进行两次确认，停止并删除原生服务及开机启动配置，随后允许保留或删除 `config/`。保留时会留下凭证和设备数据；删除时会移除 `settings.yaml` 和 `devices.db`。
+
+## 语言
+
+本 README 提供简体中文、English、Español 和 Français 四种版本，默认显示简体中文。
+
+应用的安装器、TUI、服务消息、API 消息和 Web UI 目前提供简体中文（`zh-CN`）与 English（`en-US`）。显式选择会保存到 `config/settings.yaml`；否则使用系统语言，最终回退到 English。
+
+## 开发
+
+仅在本地 Web 开发时使用：
+
 ```bash
-python3 run_web.py
+python run_web.py --reload
 ```
 
-- 浏览器访问 `http://127.0.0.1:8000` 进行所有设置。
-- **后台控制实时生效**: 修改轮询间隔、增减设备，系统下个调度周期立刻生效！
+生产源码服务与 Docker 使用非 reload 的启动方式。

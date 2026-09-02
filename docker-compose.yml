@@ -1,11 +1,11 @@
 version: '3.8'
 
 services:
-  qiniu-monitor:
+  qiniu-qvs-notifier:
     build: .
     # 如果用户使用拉取现成镜像的方式，可以取消下面这行的注释并修改镜像名
     # image: ghcr.io/katfionn/qiniu-qvs-device-alert-to-dingtalk-bot:latest
-    container_name: qiniu-monitor
+    container_name: qiniu-qvs-notifier
     restart: always
     ports:
       - "8000:8000"

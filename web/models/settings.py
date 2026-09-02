@@ -29,11 +29,15 @@ class AlertConfig(BaseModel):
     notify_online: bool = Field(default=False, description="上线时是否通知")
     notify_offline: bool = Field(default=True, description="下线时是否通知")
 
+class UIConfig(BaseModel):
+    language: str = Field(default="", description="Explicit UI language; empty uses system language")
+
 class AppConfig(BaseModel):
     qiniu: QiniuConfig = QiniuConfig()
     webhook: WebhookConfig = WebhookConfig()
     schedule: ScheduleConfig = ScheduleConfig()
     alert: AlertConfig = AlertConfig()
+    ui: UIConfig = UIConfig()
 
 def load_config() -> AppConfig:
     if not os.path.exists(CONFIG_PATH):
@@ -45,7 +49,8 @@ def load_config() -> AppConfig:
         qiniu=QiniuConfig(**data.get("qiniu", {})),
         webhook=WebhookConfig(**data.get("webhook", {})),
         schedule=ScheduleConfig(**data.get("schedule", {})),
-        alert=AlertConfig(**data.get("alert", {}))
+        alert=AlertConfig(**data.get("alert", {})),
+        ui=UIConfig(**data.get("ui", {}))
     )
 
 def save_config(config: AppConfig):
@@ -64,6 +69,7 @@ def save_config(config: AppConfig):
     data["webhook"] = config.webhook.model_dump()
     data["schedule"] = config.schedule.model_dump()
     data["alert"] = config.alert.model_dump()
+    data["ui"] = config.ui.model_dump()
 
     with open(CONFIG_PATH, "w", encoding="utf-8") as f:
         yaml.dump(data, f, allow_unicode=True, default_flow_style=False)

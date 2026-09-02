@@ -19,7 +19,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 拷贝项目源代码
 COPY web/ web/
 COPY run_web.py .
-COPY README.md .
 
 # 创建配置和数据的挂载目录
 RUN mkdir -p config
@@ -28,4 +27,4 @@ RUN mkdir -p config
 EXPOSE 8000
 
 # 启动 Web 和 监控守护进程
-CMD ["python", "run_web.py"]
+CMD ["python", "run_web.py", "--no-reload"]

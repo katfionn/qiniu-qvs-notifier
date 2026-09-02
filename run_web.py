@@ -1,8 +1,25 @@
+"""Production Web entry point. Development reload is opt-in."""
+from __future__ import annotations
+
+import argparse
 import uvicorn
-import sys
+
+
+def run_web(stop_event=None) -> None:
+    config = uvicorn.Config("web.main:app", host="0.0.0.0", port=8000, reload=False)
+    server = uvicorn.Server(config)
+    if stop_event:
+        import threading
+        threading.Thread(target=lambda: (stop_event.wait(), setattr(server, "should_exit", True)), daemon=True).start()
+    server.run()
+
 
 if __name__ == "__main__":
-    print("启动系统配置中心...")
-    print("请在浏览器中访问: http://127.0.0.1:8000")
-    # 也可以读取刚刚 install.py 生成的 settings.yaml，如果有绑定限制等
-    uvicorn.run("web.main:app", host="0.0.0.0", port=8000, reload=True)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--reload", action="store_true", help="enable development auto-reload")
+    parser.add_argument("--no-reload", action="store_true", help="accepted for service compatibility")
+    args = parser.parse_args()
+    if args.reload:
+        uvicorn.run("web.main:app", host="0.0.0.0", port=8000, reload=True)
+    else:
+        run_web()

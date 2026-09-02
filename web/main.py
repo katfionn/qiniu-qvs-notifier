@@ -6,6 +6,7 @@ import asyncio
 from web.models.settings import load_config, save_config, AppConfig
 from web.models.device import init_db, get_all_devices, add_device, delete_device, import_from_txt
 from web.monitor import start_daemon
+from qvs_notifier.i18n import normalize_locale, web_messages
 
 app = FastAPI(title="Qiniu Monitor Admin")
 templates = Jinja2Templates(directory="web/templates")
@@ -27,6 +28,11 @@ async def startup_event():
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
+@app.get("/api/i18n")
+async def get_i18n(language: str | None = None):
+    config = load_config()
+    return {"language": normalize_locale(language or config.ui.language), "messages": web_messages(language or config.ui.language)}
 
 @app.get("/api/config")
 async def get_config():
@@ -52,7 +58,7 @@ async def create_device(payload: DevicePayload):
     success = add_device(payload.namespace_id, payload.gb_id, payload.name)
     if success:
         return {"status": "success"}
-    return {"status": "failed", "message": "Device already exists or error"}
+    return {"status": "failed", "message": "device_exists"}
 
 @app.delete("/api/devices/{device_id}")
 async def remove_device(device_id: int):
