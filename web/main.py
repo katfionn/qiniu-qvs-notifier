@@ -1,15 +1,15 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import asyncio
+from pathlib import Path
 from web.models.settings import load_config, save_config, AppConfig
 from web.models.device import init_db, get_all_devices, add_device, delete_device, import_from_txt
 from web.monitor import start_daemon
 from qvs_notifier.i18n import normalize_locale, web_messages
 
 app = FastAPI(title="Qiniu Monitor Admin")
-templates = Jinja2Templates(directory="web/templates")
 
 # 用于保存后台任务的引用，防止被垃圾回收
 background_tasks = set()
@@ -26,8 +26,9 @@ async def startup_event():
     task.add_done_callback(background_tasks.discard)
 
 @app.get("/", response_class=HTMLResponse)
-async def read_root(request: Request):
-    return templates.TemplateResponse(request=request, name="index.html")
+async def read_root():
+    html_path = Path(__file__).parent / "templates" / "index.html"
+    return FileResponse(html_path)
 
 @app.get("/api/i18n")
 async def get_i18n(language: str | None = None):
