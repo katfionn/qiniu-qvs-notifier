@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  qiniu-monitor:
+    build: .
+    # 如果用户使用拉取现成镜像的方式，可以取消下面这行的注释并修改镜像名
+    # image: ghcr.io/katfionn/qiniu-qvs-device-alert-to-dingtalk-bot:latest
+    container_name: qiniu-monitor
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      # 将配置文件和 SQLite 数据库持久化到宿主机当前目录的 config 文件夹下
+      - ./config:/app/config
+    environment:
+      - TZ=Asia/Shanghai
