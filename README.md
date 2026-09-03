@@ -6,7 +6,20 @@
 
 ## 安装
 
-### Docker：仅 Web 服务
+### Docker：使用预构建镜像（推荐）
+
+```bash
+docker run -d \
+  -p 8000:8000 \
+  -v ./config:/app/config \
+  --restart always \
+  --name qiniu-qvs-notifier \
+  ghcr.io/katfionn/qiniu-qvs-notifier:latest
+```
+
+访问 `http://localhost:8000` 进行配置。
+
+### Docker：从源码构建
 
 Docker 只提供 Web 服务，不包含交互式 TUI 或服务模式选择。
 

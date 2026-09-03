@@ -6,7 +6,20 @@ Qiniu QVS device monitoring with state-change alerts through DingTalk or another
 
 ## Installation
 
-### Docker: Web only
+### Docker: Use pre-built image (Recommended)
+
+```bash
+docker run -d \
+  -p 8000:8000 \
+  -v ./config:/app/config \
+  --restart always \
+  --name qiniu-qvs-notifier \
+  ghcr.io/katfionn/qiniu-qvs-notifier:latest
+```
+
+Open `http://localhost:8000` to configure.
+
+### Docker: Build from source
 
 Docker deliberately provides only the Web service, without the interactive TUI or a service-mode choice.
 

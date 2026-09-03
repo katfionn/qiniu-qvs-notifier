@@ -6,7 +6,20 @@ Surveillance des appareils Qiniu QVS avec alertes lors des changements d’état
 
 ## Installation
 
-### Docker : Web uniquement
+### Docker : Utiliser l’image préconstruite (Recommandé)
+
+```bash
+docker run -d \
+  -p 8000:8000 \
+  -v ./config:/app/config \
+  --restart always \
+  --name qiniu-qvs-notifier \
+  ghcr.io/katfionn/qiniu-qvs-notifier:latest
+```
+
+Ouvrez `http://localhost:8000` pour configurer.
+
+### Docker : Construire à partir du code source
 
 Docker fournit uniquement le service Web ; il ne contient ni TUI interactive ni choix de mode de service.
 

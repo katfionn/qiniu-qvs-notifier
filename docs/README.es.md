@@ -6,7 +6,20 @@ Supervisión de dispositivos Qiniu QVS con alertas cuando cambia el estado media
 
 ## Instalación
 
-### Docker: solo Web
+### Docker: Usar imagen preconstruida (Recomendado)
+
+```bash
+docker run -d \
+  -p 8000:8000 \
+  -v ./config:/app/config \
+  --restart always \
+  --name qiniu-qvs-notifier \
+  ghcr.io/katfionn/qiniu-qvs-notifier:latest
+```
+
+Abra `http://localhost:8000` para configurar.
+
+### Docker: Construir desde el código fuente
 
 Docker ofrece exclusivamente el servicio Web; no incluye la TUI interactiva ni la selección de modo de servicio.
 
