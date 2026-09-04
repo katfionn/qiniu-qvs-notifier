@@ -438,6 +438,223 @@ def notification_channels_menu() -> None:
             break
 
 
+# ==================== Web 服务管理 ====================
+
+def get_web_port() -> int:
+    """从环境变量获取 Web 端口"""
+    return int(os.getenv("WEB_PORT", "8000"))
+
+
+def is_web_service_running() -> bool:
+    """检查 Web 服务是否运行"""
+    import subprocess
+    try:
+        result = subprocess.run(
+            ["ps", "aux"],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        return "run_web_v2.py" in result.stdout
+    except:
+        return False
+
+
+def start_web_service() -> None:
+    """启动 Web 服务"""
+    import subprocess
+
+    if is_web_service_running():
+        console.print("[yellow]Web 服务已在运行中[/yellow]")
+        return
+
+    port = get_web_port()
+    console.print(f"[cyan]正在启动 Web 服务（端口: {port}）...[/cyan]")
+
+    try:
+        # 使用 nohup 在后台启动
+        subprocess.Popen(
+            ["nohup", "python", str(ROOT / "run_web_v2.py")],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True
+        )
+
+        # 等待服务启动
+        import time
+        time.sleep(3)
+
+        if is_web_service_running():
+            console.print(f"[green]✓ Web 服务启动成功[/green]")
+            console.print(f"[cyan]访问地址: http://localhost:{port}[/cyan]")
+        else:
+            console.print("[red]✗ Web 服务启动失败，请检查日志[/red]")
+    except Exception as e:
+        console.print(f"[red]✗ 启动失败: {e}[/red]")
+
+
+def stop_web_service() -> None:
+    """停止 Web 服务"""
+    import subprocess
+
+    if not is_web_service_running():
+        console.print("[yellow]Web 服务未运行[/yellow]")
+        return
+
+    console.print("[cyan]正在停止 Web 服务...[/cyan]")
+
+    try:
+        subprocess.run(
+            ["pkill", "-f", "run_web_v2.py"],
+            timeout=10
+        )
+
+        import time
+        time.sleep(2)
+
+        if not is_web_service_running():
+            console.print("[green]✓ Web 服务已停止[/green]")
+        else:
+            console.print("[yellow]服务可能仍在运行，请手动检查[/yellow]")
+    except Exception as e:
+        console.print(f"[red]✗ 停止失败: {e}[/red]")
+
+
+def restart_web_service() -> None:
+    """重启 Web 服务"""
+    console.print("[cyan]正在重启 Web 服务...[/cyan]")
+    stop_web_service()
+    import time
+    time.sleep(2)
+    start_web_service()
+
+
+def show_web_service_status() -> None:
+    """显示 Web 服务状态"""
+    running = is_web_service_running()
+    port = get_web_port()
+
+    status_text = "[green]运行中[/green]" if running else "[red]未运行[/red]"
+
+    table = Table(title="Web 服务状态", border_style="cyan")
+    table.add_column("项目", style="cyan")
+    table.add_column("值", style="white")
+
+    table.add_row("状态", status_text)
+    table.add_row("端口", str(port))
+    if running:
+        table.add_row("访问地址", f"http://localhost:{port}")
+
+    console.print(table)
+
+
+def web_service_menu() -> None:
+    """Web 服务管理菜单"""
+    while True:
+        running = is_web_service_running()
+
+        choices = [
+            "查看服务状态",
+            "启动服务" if not running else "停止服务",
+            "重启服务",
+            "返回上级"
+        ]
+
+        action = questionary.select(
+            "Web 服务管理",
+            choices=choices
+        ).ask()
+
+        if action == "查看服务状态":
+            show_web_service_status()
+        elif action == "启动服务":
+            start_web_service()
+        elif action == "停止服务":
+            stop_web_service()
+        elif action == "重启服务":
+            restart_web_service()
+        elif action == "返回上级":
+            break
+
+
+# ==================== 卸载功能 ====================
+
+def uninstall_program() -> None:
+    """卸载程序"""
+    console.print("\n[bold red]警告：此操作将完全卸载 QVS 通知器[/bold red]")
+    console.print("[yellow]将删除以下内容：[/yellow]")
+    console.print("  • systemd 服务（如果存在）")
+    console.print("  • qvs 命令")
+    console.print("  • 程序文件（如果在标准位置）")
+    console.print("\n[cyan]数据文件将会保留，可手动删除[/cyan]\n")
+
+    confirm = questionary.confirm(
+        "确认卸载？此操作不可恢复",
+        default=False
+    ).ask()
+
+    if not confirm:
+        console.print("[cyan]已取消卸载[/cyan]")
+        return
+
+    # 再次确认
+    final_confirm = questionary.text(
+        "请输入 'UNINSTALL' 确认卸载"
+    ).ask()
+
+    if final_confirm != "UNINSTALL":
+        console.print("[cyan]已取消卸载[/cyan]")
+        return
+
+    import subprocess
+    from web.models.database import DATA_DIR
+
+    console.print("\n[cyan]开始卸载...[/cyan]\n")
+
+    # 1. 停止 Web 服务
+    console.print("1. 停止 Web 服务...")
+    if is_web_service_running():
+        stop_web_service()
+    else:
+        console.print("   [yellow]服务未运行[/yellow]")
+
+    # 2. 停止并删除 systemd 服务
+    console.print("2. 删除 systemd 服务...")
+    try:
+        subprocess.run(["sudo", "systemctl", "stop", "qvs-notifier"],
+                      capture_output=True, timeout=10)
+        subprocess.run(["sudo", "systemctl", "disable", "qvs-notifier"],
+                      capture_output=True, timeout=10)
+        subprocess.run(["sudo", "rm", "-f", "/etc/systemd/system/qvs-notifier.service"],
+                      timeout=10)
+        subprocess.run(["sudo", "systemctl", "daemon-reload"],
+                      capture_output=True, timeout=10)
+        console.print("   [green]✓ systemd 服务已删除[/green]")
+    except:
+        console.print("   [yellow]systemd 服务不存在或删除失败[/yellow]")
+
+    # 3. 删除 qvs 命令
+    console.print("3. 删除 qvs 命令...")
+    try:
+        subprocess.run(["sudo", "rm", "-f", "/usr/local/bin/qvs"], timeout=10)
+        console.print("   [green]✓ qvs 命令已删除[/green]")
+    except:
+        console.print("   [yellow]qvs 命令删除失败[/yellow]")
+
+    # 4. 提示数据文件位置
+    console.print(f"\n[cyan]数据文件位置: {DATA_DIR}[/cyan]")
+    console.print("[cyan]如需删除数据，请手动运行:[/cyan]")
+    console.print(f"  rm -rf {DATA_DIR}")
+
+    # 5. 提示程序文件位置
+    console.print(f"\n[cyan]程序文件位置: {ROOT}[/cyan]")
+    console.print("[cyan]如需删除程序，请手动运行:[/cyan]")
+    console.print(f"  rm -rf {ROOT}")
+
+    console.print("\n[green]✓ 卸载完成！[/green]")
+    console.print("[yellow]建议重启终端以刷新环境变量[/yellow]\n")
+
+
 # ==================== 系统管理 ====================
 
 def show_system_info() -> None:
@@ -452,6 +669,12 @@ def show_system_info() -> None:
     table.add_row("数据目录", str(DATA_DIR))
     table.add_row("账号数据库", str(DATA_DB_PATH))
     table.add_row("日志数据库", str(LOGS_DB_PATH))
+
+    # Web 服务状态
+    web_running = is_web_service_running()
+    web_status = "[green]运行中[/green]" if web_running else "[red]未运行[/red]"
+    table.add_row("Web 服务", web_status)
+    table.add_row("Web 端口", str(get_web_port()))
 
     with DataSession() as session:
         task_count = session.query(Task).count()
@@ -472,16 +695,23 @@ def system_menu() -> None:
             "系统管理",
             choices=[
                 "查看系统信息",
+                "Web 服务管理",
                 "管理员账号管理",
+                "卸载程序",
                 "返回主菜单"
             ]
         ).ask()
 
         if action == "查看系统信息":
             show_system_info()
+        elif action == "Web 服务管理":
+            web_service_menu()
         elif action == "管理员账号管理":
             from qvs_notifier.admin import main as admin_main
             admin_main()
+        elif action == "卸载程序":
+            uninstall_program()
+            break  # 卸载后退出
         elif action == "返回主菜单":
             break
 
