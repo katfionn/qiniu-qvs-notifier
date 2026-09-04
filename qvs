@@ -1,0 +1,16 @@
+#!/usr/bin/env python3
+"""
+七牛 QVS 通知器 v2.0 - 命令行入口
+快捷命令：qvs
+"""
+import sys
+from pathlib import Path
+
+# Add project root to path
+ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT))
+
+from qvs_notifier.tui_v2 import main
+
+if __name__ == "__main__":
+    main()
