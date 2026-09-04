@@ -2,3 +2,13 @@
 data/
 __pycache__/
 .env
+
+
+# 测试和学习文档（本地保留，不提交到仓库）
+CREATE_TEST_USER.md
+FINAL_TEST_SUMMARY.md
+INSTALL_TEST_GUIDE.md
+LOOP_ENGINEERING_REPORT.md
+TEST_REPORT.md
+scripts/test_api.py
+scripts/auto_test.sh
