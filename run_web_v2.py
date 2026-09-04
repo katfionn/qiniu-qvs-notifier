@@ -7,10 +7,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
-from rich.console import Console
-
-console = Console()
-
 
 def load_env():
     """加载 .env 文件中的环境变量"""
@@ -26,8 +22,11 @@ def load_env():
 
 def main():
     """Main entry point"""
-    # 加载环境变量
+    # 必须先加载环境变量，再导入其他模块
     load_env()
+
+    from rich.console import Console
+    console = Console()
 
     # Check if this is first run
     from web.models.database import is_first_run
