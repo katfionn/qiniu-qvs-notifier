@@ -54,7 +54,7 @@ def decode_access_token(token: str) -> dict[str, Any]:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token 已过期"
         )
-    except jwt.JWTError:
+    except (jwt.InvalidTokenError, jwt.DecodeError, Exception):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="无效的 Token"
