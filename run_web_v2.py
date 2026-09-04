@@ -7,17 +7,22 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
+# ⚠️ CRITICAL: Load .env BEFORE any other imports
+# web.main_v2 imports web.auth at module level, which reads SECRET_KEY
+# So we MUST load environment variables before importing anything else
+env_file = ROOT / ".env"
+if env_file.exists():
+    with open(env_file, "r") as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key, value = line.split("=", 1)
+                os.environ[key] = value
+
 
 def load_env():
-    """加载 .env 文件中的环境变量"""
-    env_file = ROOT / ".env"
-    if env_file.exists():
-        with open(env_file, "r") as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith("#") and "=" in line:
-                    key, value = line.split("=", 1)
-                    os.environ[key] = value
+    """加载 .env 文件中的环境变量（已在模块级别完成）"""
+    pass  # Already loaded at module level
 
 
 def main():
