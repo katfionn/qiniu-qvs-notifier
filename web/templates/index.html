@@ -1,19 +1,451 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="zh-CN">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Qiniu QVS Notifier</title>
-  <script src="https://cdn.tailwindcss.com"></script><script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>七牛 QVS 通知器 v2.0</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <style>
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        #app { height: 100vh; }
+        .login-container { display: flex; justify-content: center; align-items: center; height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .login-box { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 400px; }
+        .login-title { text-align: center; margin-bottom: 30px; font-size: 24px; color: #333; }
+        .main-layout { height: 100vh; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 0 20px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .logo { font-size: 20px; font-weight: bold; color: #409EFF; }
+        .el-aside { background: #304156; color: #fff; }
+        .el-menu { border-right: none; }
+        .content-area { padding: 20px; background: #f0f2f5; overflow-y: auto; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .page-title { font-size: 24px; font-weight: 500; color: #333; }
+    </style>
 </head>
-<body class="bg-slate-50 text-slate-800"><main id="app" class="max-w-6xl mx-auto p-5 space-y-6" v-cloak>
-  <header class="flex flex-wrap gap-3 items-center justify-between"><h1 class="text-3xl font-bold">{{t('web.title')}}</h1><select v-model="language" @change="changeLanguage" class="border rounded p-2"><option value="zh-CN">简体中文</option><option value="en-US">English</option></select></header>
-  <section class="bg-white shadow rounded-xl p-6 grid lg:grid-cols-2 gap-8">
-    <div class="space-y-5"><h2 class="font-semibold text-xl">{{t('web.qiniu')}}</h2><label class="block">{{t('web.access_key')}}<input v-model="config.qiniu.access_key" class="block border rounded w-full p-2 mt-1"></label><label class="block">{{t('web.secret_key')}}<input v-model="config.qiniu.secret_key" type="password" class="block border rounded w-full p-2 mt-1"></label>
-      <h2 class="font-semibold text-xl">{{t('web.schedule')}}</h2><label>{{t('web.mode')}}<select v-model="config.schedule.mode" class="block border rounded w-full p-2 mt-1"><option value="loop">{{t('web.loop')}}</option><option value="once">{{t('web.once')}}</option></select></label><label v-if="config.schedule.mode==='loop'" class="block">{{t('web.interval')}}<input v-model.number="config.schedule.interval_seconds" min="10" type="number" class="block border rounded w-full p-2 mt-1"></label><label class="block"><input v-model="config.alert.notify_offline" type="checkbox"> {{t('web.offline')}}</label><label class="block"><input v-model="config.alert.notify_online" type="checkbox"> {{t('web.online')}}</label></div>
-    <div class="space-y-5"><h2 class="font-semibold text-xl">{{t('web.webhook')}}</h2><label class="block">{{t('web.url')}}<input v-model="config.webhook.url" class="block border rounded w-full p-2 mt-1"></label><label class="block">{{t('web.auth')}}<select v-model="config.webhook.auth_type" class="block border rounded w-full p-2 mt-1"><option value="none">{{t('web.none')}}</option><option value="sign">{{t('web.sign')}}</option><option value="keyword">{{t('web.keyword')}}</option></select></label><label v-if="config.webhook.auth_type==='sign'" class="block">Secret<input v-model="config.webhook.secret" type="password" class="block border rounded w-full p-2 mt-1"></label><label v-if="config.webhook.auth_type==='keyword'" class="block">Keyword<input v-model="config.webhook.keyword" class="block border rounded w-full p-2 mt-1"></label><label class="block">{{t('web.template')}}<input v-model="config.webhook.template" class="block border rounded w-full p-2 mt-1"></label><label class="block">{{t('web.body')}}<textarea v-model="config.webhook.custom_body" rows="4" class="block border rounded w-full p-2 mt-1 font-mono"></textarea></label></div>
-    <div class="lg:col-span-2"><button @click="saveConfig" class="bg-indigo-600 text-white px-5 py-2 rounded">{{t('web.save')}}</button><span class="ml-3 text-green-700">{{saved}}</span></div>
-  </section>
-  <section class="bg-white shadow rounded-xl p-6"><div class="flex justify-between"><h2 class="font-semibold text-xl">{{t('web.devices')}}</h2><button @click="adding=!adding" class="bg-green-600 text-white px-4 py-2 rounded">{{t('web.add')}}</button></div><form v-if="adding" @submit.prevent="addDevice" class="grid sm:grid-cols-4 gap-3 my-5"><input required v-model="newDevice.namespace_id" :placeholder="t('web.namespace')" class="border rounded p-2"><input required v-model="newDevice.gb_id" :placeholder="t('web.gbid')" class="border rounded p-2"><input required v-model="newDevice.name" :placeholder="t('web.device_name')" class="border rounded p-2"><button class="bg-indigo-600 text-white rounded">{{t('web.confirm')}}</button></form><p v-if="!devices.length" class="my-5 text-slate-500">{{t('web.no_devices')}}</p><div class="overflow-x-auto"><table v-if="devices.length" class="w-full text-left"><thead><tr class="border-b"><th>ID</th><th>{{t('web.namespace')}}</th><th>{{t('web.gbid')}}</th><th>{{t('web.device_name')}}</th><th>{{t('web.state')}}</th><th>{{t('web.actions')}}</th></tr></thead><tbody><tr v-for="device in devices" class="border-b"><td>{{device.id}}</td><td>{{device.namespace_id}}</td><td>{{device.gb_id}}</td><td>{{device.name}}</td><td>{{state(device.last_state)}}</td><td><button @click="deleteDevice(device.id)" class="text-red-700">{{t('web.delete')}}</button></td></tr></tbody></table></div></section>
-</main><script>
-const {createApp,ref,onMounted}=Vue;createApp({setup(){const empty={qiniu:{access_key:'',secret_key:''},schedule:{mode:'loop',interval_seconds:60},alert:{notify_online:false,notify_offline:true},webhook:{url:'',auth_type:'none',secret:'',keyword:'',template:'[{device} {state}]',custom_body:'{"msgtype":"text","text":{"content":"{message}"}}'},ui:{language:''}};const config=ref(structuredClone(empty)),devices=ref([]),messages=ref({}),language=ref('en-US'),saved=ref(''),adding=ref(false),newDevice=ref({namespace_id:'',gb_id:'',name:''});const t=k=>messages.value[k]||k;const state=s=>t(s==='online'?'web.online_state':s==='offline'?'web.offline_state':'web.unknown');async function loadI18n(){let r=await fetch('/api/i18n?language='+encodeURIComponent(language.value));let d=await r.json();language.value=d.language;messages.value=d.messages;document.documentElement.lang=language.value}async function load(){let [c,d]=await Promise.all([fetch('/api/config'),fetch('/api/devices')]);config.value={...empty,...await c.json()};devices.value=await d.json();language.value=config.value.ui?.language||navigator.language;await loadI18n()}async function saveConfig(){try{JSON.parse(config.value.webhook.custom_body)}catch(e){alert(t('web.invalid_json'));return}config.value.ui.language=language.value;await fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(config.value)});saved.value=t('web.saved');setTimeout(()=>saved.value='',3000)}async function changeLanguage(){await loadI18n();config.value.ui.language=language.value;await saveConfig()}async function addDevice(){let r=await fetch('/api/devices',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(newDevice.value)});if(!r.ok){alert(t('web.add_failed'));return}adding.value=false;newDevice.value={namespace_id:'',gb_id:'',name:''};devices.value=await (await fetch('/api/devices')).json()}async function deleteDevice(id){if(confirm(t('web.confirm_delete'))){await fetch('/api/devices/'+id,{method:'DELETE'});devices.value=await (await fetch('/api/devices')).json()}}onMounted(load);return{config,devices,messages,language,saved,adding,newDevice,t,state,saveConfig,changeLanguage,addDevice,deleteDevice}}).mount('#app');
-</script></body></html>
+<body>
+    <div id="app" v-cloak>
+        <!-- Login Page -->
+        <div v-if="!isLoggedIn" class="login-container">
+            <div class="login-box">
+                <h1 class="login-title">七牛 QVS 通知器</h1>
+                <p style="text-align: center; color: #999; margin-bottom: 30px;">v2.0</p>
+                <el-form :model="loginForm">
+                    <el-form-item>
+                        <el-input v-model="loginForm.username" placeholder="用户名" size="large" />
+                    </el-form-item>
+                    <el-form-item>
+                        <el-input v-model="loginForm.password" type="password" placeholder="密码" size="large" @keyup.enter="handleLogin" />
+                    </el-form-item>
+                    <el-form-item>
+                        <el-button type="primary" style="width: 100%;" size="large" :loading="loginLoading" @click="handleLogin">登录</el-button>
+                    </el-form-item>
+                </el-form>
+            </div>
+        </div>
+
+        <!-- Main Layout -->
+        <el-container v-else class="main-layout">
+            <el-aside width="200px">
+                <div style="padding: 20px; text-align: center; border-bottom: 1px solid #4a5568;">
+                    <div class="logo" style="color: #fff;">QVS 通知器</div>
+                    <div style="font-size: 12px; color: #a0aec0; margin-top: 5px;">v2.0</div>
+                </div>
+                <el-menu :default-active="currentPage" background-color="#304156" text-color="#fff" active-text-color="#409EFF" @select="handleMenuSelect">
+                    <el-menu-item index="tasks"><span>任务管理</span></el-menu-item>
+                    <el-menu-item index="source-channels"><span>监听渠道</span></el-menu-item>
+                    <el-menu-item index="notification-channels"><span>通知渠道</span></el-menu-item>
+                    <el-menu-item index="settings" v-if="currentUser.role === 'admin'"><span>系统设置</span></el-menu-item>
+                    <el-menu-item index="users" v-if="currentUser.role === 'admin'"><span>用户管理</span></el-menu-item>
+                </el-menu>
+            </el-aside>
+
+            <el-container>
+                <el-header class="header" height="60px">
+                    <div></div>
+                    <el-dropdown @command="handleCommand">
+                        <span style="cursor: pointer;">{{ currentUser.username }}</span>
+                        <template #dropdown>
+                            <el-dropdown-menu>
+                                <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+                            </el-dropdown-menu>
+                        </template>
+                    </el-dropdown>
+                </el-header>
+
+                <el-main class="content-area">
+                    <!-- Tasks -->
+                    <div v-if="currentPage === 'tasks'">
+                        <div class="page-header">
+                            <h2 class="page-title">任务管理</h2>
+                            <el-button type="primary" @click="showTaskDialog()">创建任务</el-button>
+                        </div>
+                        <el-card>
+                            <el-table :data="tasks" v-loading="tasksLoading">
+                                <el-table-column prop="name" label="任务名称" width="200" />
+                                <el-table-column prop="source_channel_name" label="监听渠道" width="150" />
+                                <el-table-column prop="cron_expression" label="Cron" width="150" />
+                                <el-table-column label="状态" width="100">
+                                    <template #default="scope">
+                                        <el-tag :type="scope.row.is_enabled ? 'success' : 'info'">{{ scope.row.is_enabled ? '启用' : '禁用' }}</el-tag>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column label="操作" width="250">
+                                    <template #default="scope">
+                                        <el-button size="small" @click="showTaskDialog(scope.row)">编辑</el-button>
+                                        <el-button size="small" :type="scope.row.is_enabled ? 'warning' : 'success'" @click="toggleTask(scope.row)">{{ scope.row.is_enabled ? '禁用' : '启用' }}</el-button>
+                                        <el-button size="small" type="danger" @click="deleteTask(scope.row)">删除</el-button>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                        </el-card>
+                    </div>
+
+                    <!-- Source Channels -->
+                    <div v-if="currentPage === 'source-channels'">
+                        <div class="page-header">
+                            <h2 class="page-title">监听渠道</h2>
+                            <el-button type="primary" @click="showSourceChannelDialog()">创建渠道</el-button>
+                        </div>
+                        <el-card>
+                            <el-table :data="sourceChannels" v-loading="sourceChannelsLoading">
+                                <el-table-column prop="name" label="渠道名称" />
+                                <el-table-column prop="provider" label="服务商" width="150" />
+                                <el-table-column label="操作" width="150">
+                                    <template #default="scope">
+                                        <el-button size="small" type="danger" @click="deleteSourceChannel(scope.row)">删除</el-button>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                        </el-card>
+                    </div>
+
+                    <!-- Notification Channels -->
+                    <div v-if="currentPage === 'notification-channels'">
+                        <div class="page-header">
+                            <h2 class="page-title">通知渠道</h2>
+                            <el-button type="primary" @click="showNotificationChannelDialog()">创建渠道</el-button>
+                        </div>
+                        <el-card>
+                            <el-table :data="notificationChannels" v-loading="notificationChannelsLoading">
+                                <el-table-column prop="name" label="渠道名称" />
+                                <el-table-column prop="type" label="类型" width="150" />
+                                <el-table-column label="操作" width="150">
+                                    <template #default="scope">
+                                        <el-button size="small" type="danger" @click="deleteNotificationChannel(scope.row)">删除</el-button>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                        </el-card>
+                    </div>
+
+                    <!-- Settings -->
+                    <div v-if="currentPage === 'settings'">
+                        <div class="page-header"><h2 class="page-title">系统设置</h2></div>
+                        <el-card>
+                            <p>调度器状态: <el-tag :type="schedulerStatus.running ? 'success' : 'danger'">{{ schedulerStatus.running ? '运行中' : '已停止' }}</el-tag></p>
+                            <el-button type="primary" @click="reloadScheduler" style="margin-top: 20px;">重新加载</el-button>
+                        </el-card>
+                    </div>
+
+                    <!-- Users -->
+                    <div v-if="currentPage === 'users'">
+                        <div class="page-header">
+                            <h2 class="page-title">用户管理</h2>
+                            <el-button type="primary" @click="showUserDialog()">创建用户</el-button>
+                        </div>
+                        <el-card>
+                            <el-table :data="users" v-loading="usersLoading">
+                                <el-table-column prop="username" label="用户名" />
+                                <el-table-column prop="role" label="角色" width="150" />
+                                <el-table-column label="操作" width="150">
+                                    <template #default="scope">
+                                        <el-button size="small" type="danger" :disabled="scope.row.is_first_admin" @click="deleteUser(scope.row)">删除</el-button>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                        </el-card>
+                    </div>
+                </el-main>
+            </el-container>
+        </el-container>
+
+        <!-- Dialogs -->
+        <el-dialog v-model="taskDialogVisible" :title="taskDialogTitle" width="600px">
+            <el-form :model="taskForm" label-width="120px">
+                <el-form-item label="任务名称"><el-input v-model="taskForm.name" /></el-form-item>
+                <el-form-item label="监听渠道">
+                    <el-select v-model="taskForm.source_channel_id" style="width:100%;">
+                        <el-option v-for="c in sourceChannels" :key="c.id" :label="c.name" :value="c.id" />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="Cron"><el-input v-model="taskForm.cron_expression" placeholder="*/5 * * * *" /></el-form-item>
+                <el-form-item label="国标ID"><el-input v-model="taskForm.gb_id" placeholder="可选" /></el-form-item>
+                <el-form-item label="通知渠道">
+                    <el-select v-model="taskForm.notification_channels" multiple style="width:100%;">
+                        <el-option v-for="c in notificationChannels" :key="c.id" :label="c.name" :value="c.id" />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="启用"><el-switch v-model="taskForm.is_enabled" /></el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="taskDialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="saveTask">保存</el-button>
+            </template>
+        </el-dialog>
+
+        <el-dialog v-model="sourceChannelDialogVisible" title="创建监听渠道" width="600px">
+            <el-form :model="sourceChannelForm" label-width="120px">
+                <el-form-item label="渠道名称"><el-input v-model="sourceChannelForm.name" /></el-form-item>
+                <el-form-item label="服务商"><el-select v-model="sourceChannelForm.provider" style="width:100%;"><el-option label="七牛云" value="qiniu" /></el-select></el-form-item>
+                <el-form-item label="Access Key"><el-input v-model="sourceChannelForm.access_key" /></el-form-item>
+                <el-form-item label="Secret Key"><el-input v-model="sourceChannelForm.secret_key" type="password" show-password /></el-form-item>
+                <el-form-item label="Namespace ID"><el-input v-model="sourceChannelForm.namespace_id" /></el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="sourceChannelDialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="saveSourceChannel">保存</el-button>
+            </template>
+        </el-dialog>
+
+        <el-dialog v-model="notificationChannelDialogVisible" title="创建通知渠道" width="600px">
+            <el-form :model="notificationChannelForm" label-width="120px">
+                <el-form-item label="渠道名称"><el-input v-model="notificationChannelForm.name" /></el-form-item>
+                <el-form-item label="类型"><el-select v-model="notificationChannelForm.type" style="width:100%;"><el-option label="NTFY" value="ntfy" /><el-option label="Webhook" value="webhook" /></el-select></el-form-item>
+                <div v-if="notificationChannelForm.type === 'ntfy'">
+                    <el-form-item label="服务器"><el-input v-model="notificationChannelForm.server" placeholder="https://ntfy.sh" /></el-form-item>
+                    <el-form-item label="Topic"><el-input v-model="notificationChannelForm.topic" /></el-form-item>
+                </div>
+                <div v-if="notificationChannelForm.type === 'webhook'">
+                    <el-form-item label="URL"><el-input v-model="notificationChannelForm.url" /></el-form-item>
+                </div>
+            </el-form>
+            <template #footer>
+                <el-button @click="notificationChannelDialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="saveNotificationChannel">保存</el-button>
+            </template>
+        </el-dialog>
+
+        <el-dialog v-model="userDialogVisible" title="创建用户" width="500px">
+            <el-form :model="userForm" label-width="100px">
+                <el-form-item label="用户名"><el-input v-model="userForm.username" /></el-form-item>
+                <el-form-item label="密码"><el-input v-model="userForm.password" type="password" show-password /></el-form-item>
+                <el-form-item label="角色"><el-select v-model="userForm.role" style="width:100%;"><el-option label="普通用户" value="user" /><el-option label="管理员" value="admin" /></el-select></el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="userDialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="saveUser">保存</el-button>
+            </template>
+        </el-dialog>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script>
+const { createApp, ref, reactive, onMounted, computed } = Vue;
+createApp({
+    setup() {
+        const token = ref(localStorage.getItem('token') || '');
+        const isLoggedIn = ref(!!token.value);
+        const currentUser = ref(JSON.parse(localStorage.getItem('user') || '{}'));
+        const currentPage = ref('tasks');
+
+        const loginForm = reactive({ username: '', password: '' });
+        const loginLoading = ref(false);
+
+        const tasks = ref([]);
+        const sourceChannels = ref([]);
+        const notificationChannels = ref([]);
+        const users = ref([]);
+        const schedulerStatus = ref({});
+
+        const tasksLoading = ref(false);
+        const sourceChannelsLoading = ref(false);
+        const notificationChannelsLoading = ref(false);
+        const usersLoading = ref(false);
+
+        const taskDialogVisible = ref(false);
+        const sourceChannelDialogVisible = ref(false);
+        const notificationChannelDialogVisible = ref(false);
+        const userDialogVisible = ref(false);
+
+        const taskForm = reactive({ id: null, name: '', source_channel_id: null, cron_expression: '*/5 * * * *', gb_id: '', notification_channels: [], is_enabled: true });
+        const sourceChannelForm = reactive({ name: '', provider: 'qiniu', access_key: '', secret_key: '', namespace_id: '' });
+        const notificationChannelForm = reactive({ name: '', type: 'ntfy', server: 'https://ntfy.sh', topic: '', url: '' });
+        const userForm = reactive({ username: '', password: '', role: 'user' });
+
+        const taskDialogTitle = computed(() => taskForm.id ? '编辑任务' : '创建任务');
+
+        const api = axios.create({ headers: token.value ? { 'Authorization': `Bearer ${token.value}` } : {} });
+        api.interceptors.response.use(r => r, err => {
+            if (err.response?.status === 401) handleLogout();
+            ElementPlus.ElMessage.error(err.response?.data?.detail || '请求失败');
+            return Promise.reject(err);
+        });
+
+        const handleLogin = async () => {
+            if (!loginForm.username || !loginForm.password) return ElementPlus.ElMessage.warning('请输入用户名和密码');
+            loginLoading.value = true;
+            try {
+                const res = await axios.post('/api/auth/login', loginForm);
+                token.value = res.data.access_token;
+                currentUser.value = res.data.user;
+                localStorage.setItem('token', token.value);
+                localStorage.setItem('user', JSON.stringify(currentUser.value));
+                api.defaults.headers['Authorization'] = `Bearer ${token.value}`;
+                isLoggedIn.value = true;
+                ElementPlus.ElMessage.success('登录成功');
+                loadAllData();
+            } finally {
+                loginLoading.value = false;
+            }
+        };
+
+        const handleLogout = () => {
+            token.value = '';
+            currentUser.value = {};
+            isLoggedIn.value = false;
+            localStorage.clear();
+        };
+
+        const handleCommand = cmd => { if (cmd === 'logout') handleLogout(); };
+        const handleMenuSelect = idx => { currentPage.value = idx; };
+
+        const loadTasks = async () => { tasksLoading.value = true; try { tasks.value = (await api.get('/api/tasks')).data; } finally { tasksLoading.value = false; } };
+        const loadSourceChannels = async () => { sourceChannelsLoading.value = true; try { sourceChannels.value = (await api.get('/api/source-channels')).data; } finally { sourceChannelsLoading.value = false; } };
+        const loadNotificationChannels = async () => { notificationChannelsLoading.value = true; try { notificationChannels.value = (await api.get('/api/notification-channels')).data; } finally { notificationChannelsLoading.value = false; } };
+        const loadUsers = async () => { if (currentUser.value.role !== 'admin') return; usersLoading.value = true; try { users.value = (await api.get('/api/users')).data; } finally { usersLoading.value = false; } };
+        const loadSchedulerStatus = async () => { try { schedulerStatus.value = (await api.get('/api/scheduler/status')).data; } catch {} };
+        const loadAllData = () => { loadTasks(); loadSourceChannels(); loadNotificationChannels(); loadUsers(); loadSchedulerStatus(); };
+
+        const showTaskDialog = (task = null) => {
+            if (task) Object.assign(taskForm, task);
+            else Object.assign(taskForm, { id: null, name: '', source_channel_id: null, cron_expression: '*/5 * * * *', gb_id: '', notification_channels: [], is_enabled: true });
+            taskDialogVisible.value = true;
+        };
+
+        const saveTask = async () => {
+            try {
+                if (taskForm.id) await api.put(`/api/tasks/${taskForm.id}`, taskForm);
+                else await api.post('/api/tasks', taskForm);
+                ElementPlus.ElMessage.success('保存成功');
+                taskDialogVisible.value = false;
+                loadTasks();
+                loadSchedulerStatus();
+            } catch {}
+        };
+
+        const toggleTask = async task => {
+            try {
+                await api.put(`/api/tasks/${task.id}`, { is_enabled: !task.is_enabled });
+                ElementPlus.ElMessage.success('操作成功');
+                loadTasks();
+                loadSchedulerStatus();
+            } catch {}
+        };
+
+        const deleteTask = async task => {
+            try {
+                await ElementPlus.ElMessageBox.confirm('确认删除？', '警告', { type: 'warning' });
+                await api.delete(`/api/tasks/${task.id}`);
+                ElementPlus.ElMessage.success('删除成功');
+                loadTasks();
+                loadSchedulerStatus();
+            } catch {}
+        };
+
+        const showSourceChannelDialog = () => {
+            Object.assign(sourceChannelForm, { name: '', provider: 'qiniu', access_key: '', secret_key: '', namespace_id: '' });
+            sourceChannelDialogVisible.value = true;
+        };
+
+        const saveSourceChannel = async () => {
+            try {
+                await api.post('/api/source-channels', { name: sourceChannelForm.name, provider: sourceChannelForm.provider, namespace_id: sourceChannelForm.namespace_id, config: { access_key: sourceChannelForm.access_key, secret_key: sourceChannelForm.secret_key } });
+                ElementPlus.ElMessage.success('保存成功');
+                sourceChannelDialogVisible.value = false;
+                loadSourceChannels();
+            } catch {}
+        };
+
+        const deleteSourceChannel = async ch => {
+            try {
+                await ElementPlus.ElMessageBox.confirm('确认删除？', '警告', { type: 'warning' });
+                await api.delete(`/api/source-channels/${ch.id}`);
+                ElementPlus.ElMessage.success('删除成功');
+                loadSourceChannels();
+            } catch {}
+        };
+
+        const showNotificationChannelDialog = () => {
+            Object.assign(notificationChannelForm, { name: '', type: 'ntfy', server: 'https://ntfy.sh', topic: '', url: '' });
+            notificationChannelDialogVisible.value = true;
+        };
+
+        const saveNotificationChannel = async () => {
+            try {
+                const config = notificationChannelForm.type === 'ntfy' ? { server: notificationChannelForm.server, topic: notificationChannelForm.topic } : { url: notificationChannelForm.url };
+                await api.post('/api/notification-channels', { name: notificationChannelForm.name, type: notificationChannelForm.type, config });
+                ElementPlus.ElMessage.success('保存成功');
+                notificationChannelDialogVisible.value = false;
+                loadNotificationChannels();
+            } catch {}
+        };
+
+        const deleteNotificationChannel = async ch => {
+            try {
+                await ElementPlus.ElMessageBox.confirm('确认删除？', '警告', { type: 'warning' });
+                await api.delete(`/api/notification-channels/${ch.id}`);
+                ElementPlus.ElMessage.success('删除成功');
+                loadNotificationChannels();
+            } catch {}
+        };
+
+        const showUserDialog = () => {
+            Object.assign(userForm, { username: '', password: '', role: 'user' });
+            userDialogVisible.value = true;
+        };
+
+        const saveUser = async () => {
+            try {
+                await api.post('/api/users', userForm);
+                ElementPlus.ElMessage.success('保存成功');
+                userDialogVisible.value = false;
+                loadUsers();
+            } catch {}
+        };
+
+        const deleteUser = async user => {
+            try {
+                await ElementPlus.ElMessageBox.confirm('确认删除？', '警告', { type: 'warning' });
+                await api.delete(`/api/users/${user.id}`);
+                ElementPlus.ElMessage.success('删除成功');
+                loadUsers();
+            } catch {}
+        };
+
+        const reloadScheduler = async () => {
+            try {
+                await api.post('/api/scheduler/reload');
+                ElementPlus.ElMessage.success('重新加载成功');
+                loadSchedulerStatus();
+            } catch {}
+        };
+
+        onMounted(() => { if (isLoggedIn.value) loadAllData(); });
+
+        return {
+            isLoggedIn, currentUser, currentPage, loginForm, loginLoading, handleLogin, handleLogout, handleCommand, handleMenuSelect,
+            tasks, sourceChannels, notificationChannels, users, schedulerStatus,
+            tasksLoading, sourceChannelsLoading, notificationChannelsLoading, usersLoading,
+            taskDialogVisible, sourceChannelDialogVisible, notificationChannelDialogVisible, userDialogVisible,
+            taskForm, sourceChannelForm, notificationChannelForm, userForm, taskDialogTitle,
+            showTaskDialog, saveTask, toggleTask, deleteTask,
+            showSourceChannelDialog, saveSourceChannel, deleteSourceChannel,
+            showNotificationChannelDialog, saveNotificationChannel, deleteNotificationChannel,
+            showUserDialog, saveUser, deleteUser, reloadScheduler
+        };
+    }
+}).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html>
