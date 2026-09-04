@@ -55,24 +55,32 @@ docker run -d \
 docker logs -f qvs-notifier
 ```
 
-### 方式三：源码部署
+### 方式三：源码部署（推荐用于开发）
 
 ```bash
 # 1. 克隆仓库
 git clone https://github.com/Katfionn/qiniu-qvs-notifier.git
 cd qiniu-qvs-notifier
 
-# 2. 运行安装脚本
-chmod +x deploy_source.sh
-./deploy_source.sh
+# 2. 运行安装脚本（创建系统级快捷命令）
+sudo ./install.sh
 
-# 3. 启动服务
+# 3. 首次运行安装向导
+qvs installer
+
+# 4. 启动 TUI 管理界面
+qvs
+
+# 或启动 Web 服务
 source venv/bin/activate
 python run_web_v2.py
-
-# 或使用 TUI
-python -m qvs_notifier tui
 ```
+
+**快捷命令**：
+- `qvs` - 启动 TUI 管理界面
+- `qvs admin` - 管理员工具
+- `qvs installer` - 运行安装向导
+- `qvs tui` - 启动 TUI（同 qvs）
 
 ---
 
@@ -194,19 +202,16 @@ docker rm -f qvs-notifier
 ### 源码部署管理
 
 ```bash
-# 启动 Web 服务
+# 快捷命令（安装后）
+qvs                    # 启动 TUI 管理界面
+qvs admin              # 管理员工具
+qvs installer          # 运行安装向导
+
+# 或使用完整命令
 source venv/bin/activate
-python run_web_v2.py
-
-# 启动 TUI 管理界面
-python -m qvs_notifier tui
-
-# 查看管理员信息
-python -m qvs_notifier admin
-
-# 重置管理员密码
-python -m qvs_notifier admin
-# 选择"重置管理员密码"
+python -m qvs_notifier tui        # 启动 TUI
+python -m qvs_notifier admin      # 管理员工具
+python run_web_v2.py              # 启动 Web 服务
 ```
 
 ---
