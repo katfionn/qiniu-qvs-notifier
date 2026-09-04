@@ -40,6 +40,11 @@ def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = 
         expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
     to_encode.update({"exp": expire})
+
+    # PyJWT 2.x requires 'sub' to be a string
+    if "sub" in to_encode and not isinstance(to_encode["sub"], str):
+        to_encode["sub"] = str(to_encode["sub"])
+
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
@@ -48,6 +53,12 @@ def decode_access_token(token: str) -> dict[str, Any]:
     """解码 JWT token"""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        # Convert sub back to int if it's a string representation of int
+        if "sub" in payload and isinstance(payload["sub"], str):
+            try:
+                payload["sub"] = int(payload["sub"])
+            except ValueError:
+                pass  # Keep as string if not a valid int
         return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(
