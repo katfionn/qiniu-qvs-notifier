@@ -186,8 +186,16 @@ def init_databases() -> None:
 
 def is_first_run() -> bool:
     """检查是否首次运行（是否存在用户）"""
-    with DataSession() as session:
-        return session.query(User).count() == 0
+    # 先检查数据库文件是否存在
+    if not DATA_DB_PATH.exists():
+        return True
+
+    try:
+        with DataSession() as session:
+            return session.query(User).count() == 0
+    except Exception:
+        # 表不存在，说明是首次运行
+        return True
 
 
 def create_first_admin(username: str, password: str) -> User:

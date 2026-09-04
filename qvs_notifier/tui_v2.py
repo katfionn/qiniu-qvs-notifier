@@ -38,8 +38,8 @@ console = Console()
 def check_initialization() -> bool:
     """检查系统是否已初始化"""
     if is_first_run():
-        console.print("[yellow]系统尚未初始化，请先运行安装向导[/yellow]")
-        console.print("运行: [cyan]python -m qvs_notifier installer[/cyan]\n")
+        console.print("[yellow]系统尚未初始化[/yellow]")
+        console.print("请先运行安装脚本: [cyan]sudo bash install.sh[/cyan]\n")
         return False
     return True
 

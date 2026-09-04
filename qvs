@@ -10,7 +10,28 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
-from qvs_notifier.tui_v2 import main
+# 解析命令行参数
+if len(sys.argv) > 1:
+    command = sys.argv[1]
 
-if __name__ == "__main__":
-    main()
+    if command == "admin":
+        from qvs_notifier.admin import main as admin_main
+        admin_main()
+    elif command == "installer":
+        from qvs_notifier.installer import run_installer
+        run_installer()
+    elif command == "tui":
+        from qvs_notifier.tui_v2 import main as tui_main
+        tui_main()
+    else:
+        print(f"未知命令: {command}")
+        print("\n可用命令:")
+        print("  qvs              - 启动 TUI 管理界面")
+        print("  qvs admin        - 管理员工具")
+        print("  qvs installer    - 运行安装向导")
+        print("  qvs tui          - 启动 TUI（同 qvs）")
+else:
+    # 默认启动 TUI
+    from qvs_notifier.tui_v2 import main as tui_main
+    tui_main()
+
