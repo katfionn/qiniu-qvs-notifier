@@ -1,4 +1,5 @@
 """Run web server with first-time installation check"""
+import os
 import sys
 from pathlib import Path
 
@@ -11,8 +12,23 @@ from rich.console import Console
 console = Console()
 
 
+def load_env():
+    """加载 .env 文件中的环境变量"""
+    env_file = ROOT / ".env"
+    if env_file.exists():
+        with open(env_file, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, value = line.split("=", 1)
+                    os.environ[key] = value
+
+
 def main():
     """Main entry point"""
+    # 加载环境变量
+    load_env()
+
     # Check if this is first run
     from web.models.database import is_first_run
 

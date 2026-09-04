@@ -1,6 +1,7 @@
 """TUI v2.0 - Complete management interface with task/channel management"""
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -11,6 +12,16 @@ from rich.table import Table
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+
+# 加载 .env 文件
+env_file = ROOT / ".env"
+if env_file.exists():
+    with open(env_file, "r") as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key, value = line.split("=", 1)
+                os.environ[key] = value
 
 from web.models.database import (
     DataSession,

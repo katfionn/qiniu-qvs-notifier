@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -10,9 +11,9 @@ from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, T
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, relationship, sessionmaker
 
-# 数据目录配置
-DATA_DIR = Path(__file__).resolve().parents[2] / "data"
-DATA_DIR.mkdir(exist_ok=True)
+# 数据目录配置（支持环境变量自定义）
+DATA_DIR = Path(os.getenv('QVS_DATA_DIR', Path(__file__).resolve().parents[2] / "data"))
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 # 两个独立的数据库
 DATA_DB_PATH = DATA_DIR / "data.db"
