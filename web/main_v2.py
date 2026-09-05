@@ -33,6 +33,9 @@ from web.scheduler import (
 
 app = FastAPI(title="Qiniu QVS Notifier v2.0", version="2.0.0")
 
+# Initialize databases on startup
+init_databases()
+
 
 # ==================== Pydantic Models ====================
 
@@ -97,6 +100,47 @@ async def startup_event():
 async def shutdown_event():
     """关闭时停止调度器"""
     stop_scheduler()
+
+
+# ==================== Authentication ====================
+
+@app.get("/api/init/status")
+async def get_init_status():
+    """检查系统是否已初始化"""
+    from web.models.database import is_first_run
+    return {
+        "initialized": not is_first_run()
+    }
+
+
+class InitRequest(BaseModel):
+    username: str
+    password: str
+
+
+@app.post("/api/init/setup")
+async def setup_initial_admin(payload: InitRequest):
+    """首次初始化：创建管理员账号"""
+    from web.models.database import is_first_run, create_first_admin
+
+    if not is_first_run():
+        raise HTTPException(status_code=400, detail="系统已初始化")
+
+    if not payload.username or len(payload.username) < 3:
+        raise HTTPException(status_code=400, detail="用户名至少 3 个字符")
+
+    if not payload.password or len(payload.password) < 6:
+        raise HTTPException(status_code=400, detail="密码至少 6 个字符")
+
+    try:
+        admin = create_first_admin(payload.username, payload.password)
+        return {
+            "status": "success",
+            "message": "管理员账号创建成功",
+            "username": admin.username
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"创建失败: {str(e)}")
 
 
 # ==================== Authentication ====================
@@ -474,7 +518,14 @@ async def stop_scheduler_api(current_user: User = Depends(require_admin)):
 async def serve_index():
     """服务前端页面"""
     html_path = Path(__file__).parent / "templates" / "index.html"
-    return FileResponse(html_path)
+    return FileResponse(
+        html_path,
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
+    )
 
 
 # Mount static files if they exist
