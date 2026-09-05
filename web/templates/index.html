@@ -1104,6 +1104,14 @@
     <script src="https://unpkg.com/@element-plus/icons-vue"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script>
+// 版本信息
+const APP_VERSION = 'v2.1.0.09052026.00001';
+console.log('%c七牛 QVS 通知器', 'color: #667eea; font-size: 20px; font-weight: bold;');
+console.log('%c版本: ' + APP_VERSION, 'color: #10b981; font-size: 14px;');
+console.log('%c更新时间: 2026-09-05', 'color: #64748b; font-size: 12px;');
+console.log('%c更新内容: 全面优化 UI 设计', 'color: #64748b; font-size: 12px;');
+console.log('---');
+
 const { createApp, ref, reactive, computed, onMounted } = Vue;
 
 const app = createApp({

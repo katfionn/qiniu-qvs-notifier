@@ -7,6 +7,7 @@ services:
     # image: ghcr.io/katfionn/qiniu-qvs-device-alert-to-dingtalk-bot:latest
     container_name: qiniu-qvs-notifier
     restart: always
+    network_mode: bridge
     ports:
       - "8000:8000"
     volumes:
@@ -14,3 +15,8 @@ services:
       - ./config:/app/config
     environment:
       - TZ=Asia/Shanghai
+      - QVS_USE_ENV_CONFIG=true
+      - QVS_DATA_DIR=/app/data
+      - QVS_ADMIN_USERNAME=admin
+      - QVS_ADMIN_PASSWORD=admin123456
+      - WEB_PORT=8000

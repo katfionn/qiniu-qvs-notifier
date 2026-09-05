@@ -33,26 +33,24 @@ def main():
     from rich.console import Console
     console = Console()
 
-    # Check if this is first run
-    from web.models.database import is_first_run
+    # 读取 Web 端口配置
+    web_port = int(os.environ.get("WEB_PORT", "8000"))
 
-    if is_first_run():
-        console.print("[yellow]检测到首次运行，启动安装向导...[/yellow]\n")
-        from qvs_notifier.installer import run_installer
-        run_installer()
-        console.print("\n[cyan]安装完成！现在启动 Web 服务...[/cyan]\n")
+    # 初始化数据库（创建表结构，不创建用户）
+    from web.models.database import init_databases
+    init_databases()
 
-    # Start web server
+    # Start web server directly (initialization handled by web UI)
     import uvicorn
     from web.main_v2 import app
 
     console.print("[cyan]启动 Web 服务...[/cyan]")
-    console.print("[cyan]访问地址: http://0.0.0.0:8000[/cyan]\n")
+    console.print(f"[cyan]访问地址: http://0.0.0.0:{web_port}[/cyan]\n")
 
     uvicorn.run(
         app,
         host="0.0.0.0",
-        port=8000,
+        port=web_port,
         log_level="info"
     )
 

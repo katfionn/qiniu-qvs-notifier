@@ -1,80 +1,46 @@
 #!/bin/bash
-# 快速部署脚本 - 七牛 QVS 通知器 v2.0
+# 自动部署脚本
 
 set -e
 
-echo "======================================"
-echo "七牛 QVS 通知器 v2.0 - 快速部署"
-echo "======================================"
-echo ""
+echo "=== 开始部署 QVS Notifier UI 优化 ==="
 
-# 检查 Docker
-if ! command -v docker &> /dev/null; then
-    echo "❌ 未检测到 Docker，请先安装 Docker"
-    exit 1
-fi
+# 1. 推送到 Git（如果有远程仓库）
+echo "1. 推送代码..."
+git push origin main 2>/dev/null || echo "跳过 git push（没有配置远程仓库或已是最新）"
 
-echo "✓ Docker 已安装"
-echo ""
+# 2. 连接服务器并更新
+echo "2. 连接服务器 claw.fe2fe.top..."
+ssh claudetest@claw.fe2fe.top << 'ENDSSH'
+set -e
 
-# 停止并删除旧容器（如果存在）
-if docker ps -a | grep -q qvs-notifier; then
-    echo "🔄 停止并删除旧容器..."
-    docker stop qvs-notifier 2>/dev/null || true
-    docker rm qvs-notifier 2>/dev/null || true
-    echo "✓ 旧容器已删除"
-    echo ""
-fi
+echo "  - 进入项目目录..."
+cd ~/qiniu-qvs-notifier-test
 
-# 拉取最新镜像
-echo "📦 拉取最新 Docker 镜像..."
-docker pull ghcr.io/katfionn/qiniu-qvs-notifier:v2.0.0
-echo "✓ 镜像拉取完成"
-echo ""
+echo "  - 拉取最新代码..."
+git pull origin main || git pull
 
-# 创建数据目录
-mkdir -p ./data
-echo "✓ 数据目录已创建: ./data"
-echo ""
+echo "  - 停止旧进程..."
+pkill -9 -f "python.*run_web_v2.py" 2>/dev/null || echo "    没有运行中的进程"
+sleep 2
 
-# 启动容器
-echo "🚀 启动容器..."
-docker run -d \
-  -p 8000:8000 \
-  -v $(pwd)/data:/app/data \
-  --restart always \
-  --name qvs-notifier \
-  ghcr.io/katfionn/qiniu-qvs-notifier:v2.0.0
+echo "  - 启动新服务..."
+nohup ~/qiniu-qvs-notifier-test/venv/bin/python run_web_v2.py > ~/qvs-test.log 2>&1 &
 
-echo "✓ 容器已启动"
-echo ""
-
-# 等待容器启动
-echo "⏳ 等待服务启动..."
-sleep 5
-
-# 检查容器状态
-if docker ps | grep -q qvs-notifier; then
-    echo "✓ 容器运行正常"
-    echo ""
-    echo "======================================"
-    echo "部署完成！"
-    echo "======================================"
-    echo ""
-    echo "📍 访问地址: http://localhost:8000"
-    echo "📍 服务器地址: http://$(hostname -I | awk '{print $1}'):8000"
-    echo ""
-    echo "📋 管理命令:"
-    echo "  查看日志: docker logs -f qvs-notifier"
-    echo "  停止服务: docker stop qvs-notifier"
-    echo "  启动服务: docker start qvs-notifier"
-    echo "  重启服务: docker restart qvs-notifier"
-    echo "  删除容器: docker rm -f qvs-notifier"
-    echo ""
-    echo "💡 首次访问将自动进入安装向导，请创建管理员账号"
-    echo ""
+sleep 3
+echo "  - 检查服务状态..."
+if pgrep -f "python.*run_web_v2.py" > /dev/null; then
+    echo "  ✓ 服务启动成功！"
+    echo "  - 进程 PID: $(pgrep -f 'python.*run_web_v2.py')"
 else
-    echo "❌ 容器启动失败，请查看日志:"
-    echo "   docker logs qvs-notifier"
+    echo "  ✗ 服务启动失败，查看日志:"
+    tail -20 ~/qvs-test.log
     exit 1
 fi
+
+ENDSSH
+
+echo ""
+echo "=== 部署完成！==="
+echo "访问 http://claw.fe2fe.top:10000"
+echo "请使用 Ctrl+Shift+R 强制刷新浏览器清除缓存"
