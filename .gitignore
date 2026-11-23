@@ -1,7 +1,9 @@
-.claude/
+.claude/*
+!.claude/settings.json
 data/
 __pycache__/
 .env
+.tmp
 
 
 # 测试和学习文档（本地保留，不提交到仓库）

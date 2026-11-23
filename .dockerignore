@@ -1,50 +1,11 @@
-# Python
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
-.Python
-*.egg-info/
-dist/
-build/
-
-# Virtual Environment
+.venv/
 venv/
-env/
-ENV/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Git
-.git/
-.gitignore
-
-# Claude
-.claude/
-
-# Documentation (not needed in container)
-docs/
-*.md
-!README.md
-
-# Local data (should be mounted as volume)
 data/
-config/
-
-# Test files
-scripts/test_*.py
-
-# Backup files
-*_backup.*
-*.bak
-
-# OS
+.env
+.git/
+tests/
+*.zip
 .DS_Store
 Thumbs.db
-
-# CI/CD
-.github/

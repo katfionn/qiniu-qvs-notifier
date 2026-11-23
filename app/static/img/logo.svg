@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 112 112" width="112" height="112" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="8" y1="6" x2="104" y2="106" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="52%" stop-color="#1E3A8A"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+    <linearGradient id="ringGrad" x1="28" y1="28" x2="84" y2="84" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="50%" stop-color="#818CF8"/>
+      <stop offset="100%" stop-color="#34D399"/>
+    </linearGradient>
+    <radialGradient id="lensCore" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#60A5FA" stop-opacity="0.95"/>
+      <stop offset="55%" stop-color="#1D4ED8" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </radialGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3.2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- 圆角底座与微高光描边 -->
+  <rect x="4" y="4" width="104" height="104" rx="26" fill="url(#bgGrad)"/>
+  <rect x="4.75" y="4.75" width="102.5" height="102.5" rx="25.25" stroke="white" stroke-opacity="0.14" stroke-width="1.5"/>
+
+  <!-- 背景雷达同心波纹 -->
+  <circle cx="56" cy="58" r="37" stroke="white" stroke-opacity="0.08" stroke-width="1.5" stroke-dasharray="5 5"/>
+  <circle cx="56" cy="58" r="29" stroke="url(#ringGrad)" stroke-opacity="0.45" stroke-width="2"/>
+
+  <!-- 监控外镜头环 -->
+  <circle cx="56" cy="58" r="22" fill="#0B1224" stroke="url(#ringGrad)" stroke-width="3.2"/>
+
+  <!-- 镜头内部玻璃反光与瞳孔 -->
+  <circle cx="56" cy="58" r="13.5" fill="url(#lensCore)"/>
+  <circle cx="56" cy="58" r="5.5" fill="#0F172A" stroke="#93C5FD" stroke-width="1.5"/>
+  <circle cx="51" cy="53" r="3" fill="white" fill-opacity="0.88"/>
+  <circle cx="62" cy="63" r="1.4" fill="#38BDF8" fill-opacity="0.75"/>
+
+  <!-- 顶部告警信号波纹弧 -->
+  <path d="M42 23.5C46 20 50.8 18.2 56 18.2C61.2 18.2 66 20 70 23.5" stroke="#38BDF8" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="M47.5 29C50 26.8 52.9 25.8 56 25.8C59.1 25.8 62 26.8 64.5 29" stroke="#34D399" stroke-width="2.4" stroke-linecap="round"/>
+
+  <!-- 右上角实时在线守护状态点 -->
+  <circle cx="84" cy="28" r="10" fill="#10B981" fill-opacity="0.24"/>
+  <circle cx="84" cy="28" r="5.8" fill="#10B981" stroke="#ECFDF5" stroke-width="2" filter="url(#glow)"/>
+</svg>

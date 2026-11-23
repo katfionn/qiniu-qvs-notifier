@@ -1,22 +1,17 @@
-version: '3.8'
-
 services:
   qiniu-qvs-notifier:
-    build: .
-    # 如果用户使用拉取现成镜像的方式，可以取消下面这行的注释并修改镜像名
-    # image: ghcr.io/katfionn/qiniu-qvs-device-alert-to-dingtalk-bot:latest
+    # 默认直接拉取 GitHub Container Registry (GHCR) 自动构建的官方镜像，开箱即用
+    image: ghcr.io/katfionn/qiniu-qvs-notifier:latest
+    # 如果您修改了本地源码希望从源码重新构建，请注释上面一行并取消下面一行的注释：
+    # build: .
     container_name: qiniu-qvs-notifier
-    restart: always
-    network_mode: bridge
+    restart: unless-stopped
     ports:
       - "8000:8000"
     volumes:
-      # 将配置文件和 SQLite 数据库持久化到宿主机当前目录的 config 文件夹下
-      - ./config:/app/config
+      # 持久化配置数据库 (data.db)、日志数据库 (logs.db) 与自动生成的随机密钥 (.secret_key)
+      - ./data:/app/data
     environment:
       - TZ=Asia/Shanghai
-      - QVS_USE_ENV_CONFIG=true
       - QVS_DATA_DIR=/app/data
-      - QVS_ADMIN_USERNAME=admin
-      - QVS_ADMIN_PASSWORD=admin123456
-      - WEB_PORT=8000
+      - PORT=8000

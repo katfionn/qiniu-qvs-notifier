@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QVS 多云监控告警中心 v3.2</title>
+  <link rel="icon" type="image/svg+xml" href="/static/img/logo.svg" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- 1. 首次运行图形化初始化向导 -->
+  <div id="view-setup" class="auth-screen hidden">
+    <div class="auth-card setup-card">
+      <div class="auth-logo-row">
+        <img src="/static/img/logo.svg" alt="QVS Logo" class="auth-logo" />
+        <div>
+          <div class="brand-badge">QVS 多云监控告警中心 v3.2</div>
+          <h1>欢迎使用，1 步完成初始化</h1>
+        </div>
+      </div>
+      <p class="auth-subtitle">设置您的管理员账号和密码，完成后立即进入图形化控制台，全程零命令行配置。</p>
+
+      <form id="setup-form" class="form-stack">
+        <div class="field">
+          <label for="setup-username">管理员用户名</label>
+          <input id="setup-username" type="text" value="admin" minlength="3" maxlength="32" required placeholder="例如：admin" />
+        </div>
+        <div class="field">
+          <label for="setup-password">
+            设置登录密码
+            <button type="button" id="btn-gen-pwd" class="link-btn">✨ 一键生成强密码</button>
+          </label>
+          <input id="setup-password" type="password" minlength="6" maxlength="128" required placeholder="至少 6 位字符" />
+          <div id="setup-pwd-hint" class="field-hint">建议 8 位以上字母与数字组合</div>
+        </div>
+        <div class="field">
+          <label for="setup-password2">确认登录密码</label>
+          <input id="setup-password2" type="password" minlength="6" maxlength="128" required placeholder="再输入一次密码" />
+        </div>
+        <div id="setup-error" class="inline-alert error hidden"></div>
+        <button type="submit" class="btn btn-primary btn-lg btn-block" id="btn-setup-submit">完成初始化并进入控制台</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. 登录界面 -->
+  <div id="view-login" class="auth-screen hidden">
+    <div class="auth-card">
+      <div class="auth-logo-row">
+        <img src="/static/img/logo.svg" alt="QVS Logo" class="auth-logo" />
+        <div>
+          <div class="brand-badge">QVS 多云监控告警中心</div>
+          <h1>登录控制台</h1>
+        </div>
+      </div>
+      <p class="auth-subtitle">统一守护七牛云、腾讯云、阿里云及自建视频监控设备</p>
+
+      <form id="login-form" class="form-stack">
+        <div class="field">
+          <label for="login-username">用户名</label>
+          <input id="login-username" type="text" required placeholder="请输入用户名" autocomplete="username" />
+        </div>
+        <div class="field">
+          <label for="login-password">密码</label>
+          <input id="login-password" type="password" required placeholder="请输入密码" autocomplete="current-password" />
+        </div>
+        <div id="login-error" class="inline-alert error hidden"></div>
+        <button type="submit" class="btn btn-primary btn-lg btn-block" id="btn-login-submit">登 录</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. 主控制台 -->
+  <div id="view-app" class="app-shell hidden">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <img src="/static/img/logo.svg" alt="Logo" class="sidebar-logo" />
+        <div>
+          <div class="brand-title">QVS 告警中心</div>
+          <div class="brand-ver" id="app-version">v3.2.0</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" id="sidebar-nav">
+        <button class="nav-item active" data-page="dashboard">
+          <span class="nav-icon">📊</span><span>总览仪表盘</span>
+        </button>
+        <button class="nav-item" data-page="tasks">
+          <span class="nav-icon">⏱️</span><span>监控任务</span>
+        </button>
+        <button class="nav-item" data-page="sources">
+          <span class="nav-icon">📡</span><span>多云监控源</span>
+        </button>
+        <button class="nav-item" data-page="notifications">
+          <span class="nav-icon">🔔</span><span>通知渠道</span>
+        </button>
+        <button class="nav-item" data-page="logs">
+          <span class="nav-icon">📋</span><span>巡检与告警日志</span>
+        </button>
+        <button class="nav-item" data-page="settings">
+          <span class="nav-icon">🛡️</span><span>系统自愈与设置</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="scheduler-pill" id="sidebar-scheduler-pill">
+          <span class="status-dot ok"></span>
+          <span>调度器运行中</span>
+        </div>
+        <div class="user-box">
+          <div>
+            <div class="user-name" id="current-username">admin</div>
+            <div class="user-role" id="current-user-role">管理员</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="btn-logout" title="退出登录">退出</button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div>
+          <h2 id="page-title">总览仪表盘</h2>
+          <p id="page-subtitle" class="topbar-sub">实时掌握多云设备在线状态、巡检进度与告警健康度</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-secondary btn-sm" id="btn-theme-toggle" title="切换浅色 / 深色主题">🌙 深色</button>
+          <button class="btn btn-secondary btn-sm" id="btn-global-refresh">↻ 刷新</button>
+        </div>
+      </header>
+
+      <div class="content-wrap">
+        <!-- 页面 A：总览仪表盘 -->
+        <section id="page-dashboard" class="page-section">
+          <div id="onboarding-banner" class="onboarding-card hidden">
+            <div class="onboarding-header">
+              <div>
+                <h3>🚀 新手 3 步快速上手指南</h3>
+                <p>按顺序完成以下 3 步，即可自动监控摄像头并实时收到离线告警（没有云账号也可以先用「演示模拟源」体验！）</p>
+              </div>
+              <button class="btn btn-ghost btn-sm" id="btn-hide-onboarding">收起引导</button>
+            </div>
+            <div class="onboarding-steps" id="onboarding-steps"></div>
+          </div>
+
+          <div class="kpi-grid" id="dashboard-kpis"></div>
+
+          <div class="two-col-grid">
+            <div class="card">
+              <div class="card-header">
+                <h3>📹 设备实时状态总览</h3>
+                <span class="badge badge-muted tabular" id="device-count-badge">0 台</span>
+              </div>
+              <div id="dashboard-devices" class="device-grid"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>🕒 最近巡检记录</h3>
+                <button class="link-btn" onclick="switchPage('logs')">查看全部 →</button>
+              </div>
+              <div id="dashboard-recent-logs" class="timeline-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 页面 B：监控任务 -->
+        <section id="page-tasks" class="page-section hidden">
+          <div class="toolbar">
+            <div class="toolbar-tip">支持傻瓜式频率选择、防误报重试、冷却防重复轰炸与恢复上线通知</div>
+            <button class="btn btn-primary" id="btn-add-task">+ 新建监控任务</button>
+          </div>
+          <div id="tasks-list" class="card-list"></div>
+        </section>
+
+        <!-- 页面 C：多云监控源配置 -->
+        <section id="page-sources" class="page-section hidden">
+          <div class="toolbar">
+            <div class="toolbar-tip">支持七牛云 QVS、腾讯云视联、阿里云 VCS、自定义 HTTP 接口及演示模拟源</div>
+            <button class="btn btn-primary" id="btn-add-source">+ 添加监控源</button>
+          </div>
+          <div id="sources-list" class="card-list"></div>
+        </section>
+
+        <!-- 页面 D：通知渠道 -->
+        <section id="page-notifications" class="page-section hidden">
+          <div class="toolbar">
+            <div class="toolbar-tip">原生适配钉钉、企业微信、飞书、NTFY 与通用 Webhook，保存前后均可一键测试</div>
+            <button class="btn btn-primary" id="btn-add-notif">+ 添加通知渠道</button>
+          </div>
+          <div id="notifications-list" class="card-list"></div>
+        </section>
+
+        <!-- 页面 E：巡检与告警日志 -->
+        <section id="page-logs" class="page-section hidden">
+          <div class="toolbar">
+            <div class="tab-group">
+              <button class="tab-btn active" data-log-tab="tasks">巡检任务日志</button>
+              <button class="tab-btn" data-log-tab="notifications">通知发送记录</button>
+            </div>
+            <div class="toolbar-right">
+              <select id="log-status-filter" class="select-sm">
+                <option value="">全部状态</option>
+                <option value="success">成功 / 已送达</option>
+                <option value="failed">失败</option>
+                <option value="skipped">静默跳过</option>
+                <option value="interrupted">中断已自愈</option>
+              </select>
+              <button class="btn btn-secondary btn-sm" id="btn-cleanup-logs">清理 30 天前日志</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="table-wrap" id="logs-table-container"></div>
+          </div>
+        </section>
+
+        <!-- 页面 F：系统自愈与设置 -->
+        <section id="page-settings" class="page-section hidden">
+          <div class="two-col-grid">
+            <div class="card">
+              <div class="card-header">
+                <h3>🛡️ 系统健康与自愈中心</h3>
+                <div class="btn-group">
+                  <button class="btn btn-secondary btn-sm" id="btn-sched-restart">重启调度器</button>
+                </div>
+              </div>
+              <div id="health-summary" class="kv-grid"></div>
+              <h4 class="sub-heading">近期自愈与系统事件</h4>
+              <div id="self-heal-events" class="timeline-list"></div>
+            </div>
+
+            <div class="stack-col">
+              <div class="card">
+                <div class="card-header"><h3>💾 一键配置备份与恢复</h3></div>
+                <p class="card-desc">导出全部监控源、通知渠道与任务为 JSON 文件，更换服务器或重装时可一键恢复。</p>
+                <div class="btn-group wrap">
+                  <button class="btn btn-primary btn-sm" id="btn-backup-safe">导出脱敏备份</button>
+                  <button class="btn btn-secondary btn-sm" id="btn-backup-full">导出完整备份（含密钥）</button>
+                  <label class="btn btn-secondary btn-sm file-label">
+                    导入恢复备份
+                    <input type="file" id="input-restore-file" accept=".json" hidden />
+                  </label>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-header"><h3>🔑 修改当前登录密码</h3></div>
+                <form id="change-pwd-form" class="form-stack">
+                  <div class="field">
+                    <label>当前原密码</label>
+                    <input type="password" id="cp-old" required />
+                  </div>
+                  <div class="field">
+                    <label>新密码（至少 6 位）</label>
+                    <input type="password" id="cp-new" minlength="6" required />
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-sm">更新密码</button>
+                </form>
+              </div>
+
+              <div class="card" id="users-admin-card">
+                <div class="card-header">
+                  <h3>👥 账号管理</h3>
+                  <button class="btn btn-secondary btn-sm" id="btn-add-user">+ 新建账号</button>
+                </div>
+                <div id="users-list"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- 通用弹窗容器（点击空白处自动保留草稿，点取消/×才清理） -->
+  <div id="modal-backdrop" class="modal-backdrop hidden">
+    <div class="modal-dialog" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <h3 id="modal-title">标题</h3>
+        <button class="modal-close" id="modal-close" aria-label="关闭并放弃草稿" title="关闭（清空未保存草稿）">×</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer" id="modal-footer"></div>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
